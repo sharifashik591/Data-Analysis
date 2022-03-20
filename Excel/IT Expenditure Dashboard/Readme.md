@@ -25,15 +25,15 @@
 # Dashboard
 ![image](https://user-images.githubusercontent.com/44643948/159189584-49f19018-ce00-4e17-a7e8-8b12437695c7.png)
 
-*I used several techniques to build this dashboard. These are:*
+*I used several techniques to build this dashboard. These are*
 _
-    1. Excel Tables
-    2. PivotTables
-    3. GETPIVOTDATA function
-    4. Pivot Charts
-    5. Slicers
-    6. TEXT function
-    7. Conditional Formatting with Formulas
-    8. Custom Number Formats
-    9. Excel Icons_
+1. Excel Tables
+2. PivotTables
+3. GETPIVOTDATA function
+4. Pivot Charts
+5. Slicers
+6. TEXT function
+7. Conditional Formatting with Formulas
+8. Custom Number Formats
+9. Excel Icons_
 
