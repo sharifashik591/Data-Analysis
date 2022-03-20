@@ -27,14 +27,14 @@
 
 I used several techniques to build this dashboard. These are
 
->Excel Tables
->PivotTables
->GETPIVOTDATA function
->Pivot Charts
->Slicers
->TEXT function
->Conditional Formatting with Formulas
->Custom Number Formats
+>Excel Tables-
+>PivotTables-
+>GETPIVOTDATA function-
+>Pivot Charts-
+>Slicers-
+>TEXT function-
+>Conditional Formatting with Formulas-
+>Custom Number Formats-
 >Excel Icons
 
 
