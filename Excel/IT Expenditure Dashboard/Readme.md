@@ -38,4 +38,4 @@
 > Excel Icons
 
 
-# _**Feel free to share** _
+# **Feel free to share for use**
