@@ -8,7 +8,7 @@ Task
 	3. Analysis 
 	
 	4. Visulize with Dashboard
-    		![image](https://user-images.githubusercontent.com/44643948/159175954-46fcde6b-3e98-4874-9c98-796645a075cf.png)
+![image](https://user-images.githubusercontent.com/44643948/159175954-46fcde6b-3e98-4874-9c98-796645a075cf.png)
 		
 		Sum of amount of each product. Filtered by saller name
 		![image](https://user-images.githubusercontent.com/44643948/159176168-5d9c58f6-fd00-4ea3-af93-f44891d9c26a.png)
