@@ -1,4 +1,8 @@
 # ======================
+
+dataset/
+business_bi.duckdb
+
 # Python
 # ======================
 __pycache__/
