@@ -41,8 +41,8 @@ build/
 *.sqlite
 *.h5
 *.hdf5
-*.pkl
-*.pickle
+# *.pkl
+# *.pickle
 data/raw/
 data/interim/
 data/processed/
@@ -51,7 +51,7 @@ data/external/
 # ======================
 # Credentials & Secrets
 # ======================
-*.json
+# *.json
 !requirements*.json
 *.env
 .env

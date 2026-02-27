@@ -89,3 +89,61 @@ This project showcases:
 
 It reflects the complete lifecycle:
 > **Data → Warehouse → ML → API → Predictive Business Intelligence**
+
+---
+
+## 🛠️ Installation & Setup Guide
+
+Follow these steps to set up the project locally.
+
+### 1. Prerequisites
+Ensure you have the following installed:
+* Python 3.9+
+* PostgreSQL & MySQL (or Docker to run them)
+* Git
+
+### 2. Clone the Repository
+```bash
+git clone https://github.com/your-username/ai-powered-bi-platform.git
+cd ai-powered-bi-platform
+```
+
+### 3. Create a Virtual Environment
+```bash
+python -m venv env
+# On Windows:
+env\Scripts\activate
+# On macOS/Linux:
+source env/bin/activate
+```
+
+### 4. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+*(If you don't have a `requirements.txt` yet, you can install the main packages directly: `pip install pandas numpy scikit-learn flask sqlalchemy python-dotenv psycopg2-binary mysql-connector-python joblib`)*
+
+### 5. Setup Environment Variables
+Create a `.env` file in the root directory (or use the existing one) with your database credentials:
+```env
+# PostgreSQL Credentials
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ai_bi_project
+DB_USER=postgres
+DB_PASSWORD=your_postgres_password
+
+# MySQL Credentials
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=your_mysql_password
+MYSQL_DB=flagship_project
+```
+
+### 6. Run the Application
+Start the Flask API server:
+```bash
+python ML_Layer/Demand_Forecasting/app.py
+```
+The server will start running on `http://127.0.0.1:5000`. You can now trigger the forecasting API by making a GET or POST request to `/forecast`.
