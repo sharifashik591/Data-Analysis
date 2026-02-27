@@ -1,3 +1,12 @@
+# Update: Delete old forecast rows first, then insert new forecast rows (every API hit)
+# This version:
+# 1) Loads history from Postgres
+# 2) Generates next N-day forecast
+# 3) DELETEs all old rows from analytics.demand_forecast_15d
+# 4) INSERTs fresh forecast rows
+#
+# pip install flask pandas numpy scikit-learn joblib sqlalchemy python-dotenv psycopg2-binary
+
 import os
 import joblib
 import pandas as pd
@@ -17,15 +26,16 @@ DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-MODEL_PATH = "saved_model/best_model.pkl"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "saved_model", "best_model.pkl")
 MODEL_NAME = "best_5_models_v1"
 
-# 👇 Change this to your real history source (table/view)
-# Must have columns: date, category, region, quantity
-HISTORY_TABLE = "analytics.ml_daily_demand_category_region"  # example name
+# Your history source (must have: date, category, region, quantity)
+HISTORY_TABLE = "analytics.ml_daily_demand_category_region"  # <-- change this to your real table/view
 
-# Where to save forecast
-FORECAST_TABLE = "analytics.demand_forecast_15d"
+# Where forecasts are stored
+FORECAST_SCHEMA = "analytics"
+FORECAST_TABLE = "demand_forecast_15d"  # full name => analytics.demand_forecast_15d
 
 
 def get_db_engine():
@@ -62,14 +72,19 @@ def make_features(data: pd.DataFrame) -> pd.DataFrame:
 # Pull history from PGSQL
 # -----------------------
 def load_history_from_db(days_back: int = 365) -> pd.DataFrame:
-    """
-    Loads last N days of history from HISTORY_TABLE.
-    """
     q = f"""
-        SELECT date, category, region, quantity
-        FROM {HISTORY_TABLE}
-        WHERE date >= (CURRENT_DATE - INTERVAL '{days_back} days')
-        ORDER BY category, region, date;
+        SELECT 
+            d.full_date AS date, 
+            p.category,
+            c.region,                
+            SUM(f.quantity) AS quantity
+        FROM warehouse.fact_sales f
+        JOIN warehouse.dim_date d ON f.date_id = d.date_id        
+        JOIN warehouse.dim_customer c ON f.customer_id = c.customer_id 
+        JOIN warehouse.dim_product p ON f.product_id = p.product_id
+        WHERE d.full_date >= (CURRENT_DATE - INTERVAL '{days_back} days')
+        GROUP BY d.full_date, p.category, c.region
+        ORDER BY p.category, c.region, d.full_date;
     """
     with engine.connect() as conn:
         df = pd.read_sql(text(q), conn)
@@ -96,7 +111,6 @@ def forecast_recursive(df: pd.DataFrame, horizon: int = 15) -> pd.DataFrame:
         g = g.sort_values("date").copy()
 
         for d in future_dates:
-            # add future row
             g = pd.concat([g, pd.DataFrame([{
                 "date": d, "category": cat, "region": reg, "quantity": np.nan
             }])], ignore_index=True)
@@ -135,21 +149,31 @@ def forecast_recursive(df: pd.DataFrame, horizon: int = 15) -> pd.DataFrame:
 
 
 # -----------------------
-# Save forecast to DB
+# DELETE ALL OLD + INSERT NEW
 # -----------------------
-def save_forecast_to_db(forecast_df: pd.DataFrame):
+def replace_forecast_table(forecast_df: pd.DataFrame):
     """
-    Inserts forecasts into FORECAST_TABLE.
+    Transaction:
+      1) DELETE all existing rows
+      2) INSERT new forecast rows
     """
     out = forecast_df.copy()
     out["model_name"] = MODEL_NAME
-    out.to_sql(
-        name=FORECAST_TABLE.split(".")[1],
-        con=engine,
-        schema=FORECAST_TABLE.split(".")[0],
-        if_exists="append",
-        index=False
-    )
+
+    with engine.begin() as conn:
+        # Delete all old forecast rows
+        conn.execute(text(f"DELETE FROM {FORECAST_SCHEMA}.{FORECAST_TABLE};"))
+
+        # Insert new rows (append)
+        out.to_sql(
+            name=FORECAST_TABLE,
+            con=conn,
+            schema=FORECAST_SCHEMA,
+            if_exists="append",
+            index=False,
+            method="multi",
+            chunksize=5000
+        )
 
 
 @app.route("/health", methods=["GET"])
@@ -157,38 +181,31 @@ def health():
     return jsonify({"status": "ok"}), 200
 
 
-@app.route("/forecast", methods=["POST"])
+@app.route("/forecast", methods=["GET"])
 def forecast():
     """
-    Body (optional):
-      {
-        "horizon": 15,
-        "days_back": 365
-      }
+    Example:
+    http://127.0.0.1:5000/forecast?horizon=15&days_back=365
     """
-    payload = request.get_json(silent=True) or {}
-    horizon = int(payload.get("horizon", 15))
-    days_back = int(payload.get("days_back", 365))
 
-    # 1) load history from DB
+    horizon = int(request.args.get("horizon", 15))
+    days_back = int(request.args.get("days_back", 365))
+
     history_df = load_history_from_db(days_back=days_back)
     if history_df.empty:
         return jsonify({"error": "No history data found in DB."}), 400
 
-    # 2) forecast
     forecast_df = forecast_recursive(history_df, horizon=horizon)
 
-    # 3) save to DB
-    save_forecast_to_db(forecast_df)
+    # Delete old forecast and insert new one
+    replace_forecast_table(forecast_df)
 
-    # 4) return response
     return jsonify({
+        "status": "success",
         "horizon": horizon,
-        "saved_rows": len(forecast_df),
-        "forecast": forecast_df.to_dict(orient="records")
-    }), 200
+        "saved_rows": len(forecast_df)
+    })
 
 
 if __name__ == "__main__":
-    # Production: gunicorn -w 2 -b 0.0.0.0:5000 app:app
     app.run(host="0.0.0.0", port=5000, debug=True)
