@@ -1,46 +1,29 @@
-import pandas as pd
 import os
+import pandas as pd
 
+# Define the path to the dataset folder
+dataset_dir = 'dataset'
 
-def show_df_info():
-
-
-    # Path to the dataset directory
-    dataset_path = r'd:\Project\Data Analysis Portfolio Project\AI-Powered Business Intelligence Platform\dataset'
-
-    # Dictionary to store DataFrames
-    dataframes = {}
-    metadata = {}
-
-    # Iterate over all files in the dataset directory
-    for file in os.listdir(dataset_path):
-        if file.endswith('.csv'):
-            # Get file name without extension
-            df_name = os.path.splitext(file)[0]
-            file_path = os.path.join(dataset_path, file)
+# Check if the directory exists
+if not os.path.exists(dataset_dir):
+    print(f"Directory '{dataset_dir}' not found.")
+else:
+    # Iterate through all files in the directory
+    for filename in os.listdir(dataset_dir):
+        if filename.endswith('.csv'):
+            # Extract table name from the filename
+            table_name = os.path.splitext(filename)[0]
+            file_path = os.path.join(dataset_dir, filename)
             
-            # Read the CSV file
+            print("========================================")
+            print(f"Table Name: {table_name}")
+            print("========================================")
+            
             try:
-                df = pd.read_csv(file_path)
-                # Store in globals to satisfy "df name as file name" request
-                globals()[df_name] = df
-                dataframes[df_name] = df
-                
-                # Extract column list with types
-                col_info = df.dtypes.to_dict()
-                metadata[df_name] = [{"column": col, "type": str(dtype)} for col, dtype in col_info.items()]
-                
-                print(f"Successfully loaded: {df_name}")
+                # Read the first 10 rows of the CSV file
+                df = pd.read_csv(file_path, nrows=10)
+                print(df)
             except Exception as e:
-                print(f"Error loading {file}: {e}")
-
-    # Display the metadata (columns and types)
-    print("\n--- Dataset Metadata (Column Names and Types) ---")
-    for df_name, cols in metadata.items():
-        print(f"\nDataFrame: {df_name}")
-        for col in cols:
-            print(f"  - {col['column']}: {col['type']}")
-
-
-
-show_df_info()
+                print(f"Error reading {filename}: {e}")
+            
+            print("\n")
