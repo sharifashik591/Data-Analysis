@@ -147,3 +147,5 @@ Start the Flask API server:
 python ML_Layer/Demand_Forecasting/app.py
 ```
 The server will start running on `http://127.0.0.1:5000`. You can now trigger the forecasting API by making a GET or POST request to `/forecast`.
+
+
